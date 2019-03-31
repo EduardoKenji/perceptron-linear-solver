@@ -24,7 +24,7 @@ INJECTED from C:\cygwin64\home\Eduardo\Libgdx\perceptron-linear-solver\android\A
 application
 ADDED from C:\cygwin64\home\Eduardo\Libgdx\perceptron-linear-solver\android\AndroidManifest.xml:5:5-22:19
 	android:label
-		ADDED from C:\cygwin64\home\Eduardo\Libgdx\perceptron-linear-solver\android\AndroidManifest.xml:10:9-41
+		ADDED from C:\cygwin64\home\Eduardo\Libgdx\perceptron-linear-solver\android\AndroidManifest.xml:10:9-49
 	android:appCategory
 		ADDED from C:\cygwin64\home\Eduardo\Libgdx\perceptron-linear-solver\android\AndroidManifest.xml:9:9-35
 	android:icon
@@ -40,7 +40,7 @@ ADDED from C:\cygwin64\home\Eduardo\Libgdx\perceptron-linear-solver\android\Andr
 	android:screenOrientation
 		ADDED from C:\cygwin64\home\Eduardo\Libgdx\perceptron-linear-solver\android\AndroidManifest.xml:15:13-50
 	android:label
-		ADDED from C:\cygwin64\home\Eduardo\Libgdx\perceptron-linear-solver\android\AndroidManifest.xml:14:13-45
+		ADDED from C:\cygwin64\home\Eduardo\Libgdx\perceptron-linear-solver\android\AndroidManifest.xml:14:13-53
 	android:configChanges
 		ADDED from C:\cygwin64\home\Eduardo\Libgdx\perceptron-linear-solver\android\AndroidManifest.xml:16:13-107
 	android:name

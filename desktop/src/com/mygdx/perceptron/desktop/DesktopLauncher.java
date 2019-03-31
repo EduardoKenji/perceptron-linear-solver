@@ -10,6 +10,7 @@ public class DesktopLauncher {
 		// Window width and height
 		config.height = 720;
 		config.width = 720;
+		config.title = "perceptron-linear-solver";
 		new LwjglApplication(new Main(), config);
 	}
 }

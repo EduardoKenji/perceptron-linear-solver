@@ -38,4 +38,36 @@ public class Plane2D {
         //Draw y axis (vertical line)
         shapeRenderer.line(relativeHalfWidth, mapBorders.getY(), relativeHalfWidth, relativeFullHeight);
     }
+
+    public float getRelativeHalfWidth() {
+        return relativeHalfWidth;
+    }
+
+    public void setRelativeHalfWidth(float relativeHalfWidth) {
+        this.relativeHalfWidth = relativeHalfWidth;
+    }
+
+    public float getRelativeHalfHeight() {
+        return relativeHalfHeight;
+    }
+
+    public void setRelativeHalfHeight(float relativeHalfHeight) {
+        this.relativeHalfHeight = relativeHalfHeight;
+    }
+
+    public float getRelativeFullWidth() {
+        return relativeFullWidth;
+    }
+
+    public void setRelativeFullWidth(float relativeFullWidth) {
+        this.relativeFullWidth = relativeFullWidth;
+    }
+
+    public float getRelativeFullHeight() {
+        return relativeFullHeight;
+    }
+
+    public void setRelativeFullHeight(float relativeFullHeight) {
+        this.relativeFullHeight = relativeFullHeight;
+    }
 }

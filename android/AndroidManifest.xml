@@ -7,11 +7,11 @@
         android:icon="@drawable/ic_launcher"
         android:isGame="true"
         android:appCategory="game"
-        android:label="@string/app_name"
+        android:label="perceptron-linear-solver"
         android:theme="@style/GdxTheme" >
         <activity
             android:name="com.mygdx.perceptron.AndroidLauncher"
-            android:label="@string/app_name" 
+            android:label="perceptron-linear-solver"
             android:screenOrientation="landscape"
             android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|screenLayout">
             <intent-filter>
