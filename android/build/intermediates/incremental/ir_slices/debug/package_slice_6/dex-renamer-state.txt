@@ -1,1 +1,4 @@
-#Sat Mar 30 14:26:59 BRT 2019
+#Sat Mar 30 22:09:41 BRT 2019
+base.0=C\:\\cygwin64\\home\\Eduardo\\Libgdx\\perceptron-linear-solver\\android\\build\\intermediates\\transforms\\dexMerger\\debug\\6
+path.0=classes.dex
+renamed.0=classes.dex
