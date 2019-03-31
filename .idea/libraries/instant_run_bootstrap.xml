@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="instant-run-bootstrap">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/android/build/intermediates/instant_run_app_info_output_file/debug/generateDebugInstantRunAppInfo/instant-run-bootstrap.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
