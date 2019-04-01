@@ -18,6 +18,8 @@ import java.util.Map;
 
 public class Main extends ApplicationAdapter implements GestureDetector.GestureListener {
 
+    // Integer hash map
+    HashMap<String, Integer> integerHashMap;
     // Buttons hash map
     HashMap<String, Button> buttonHashMap;
 	// Texts hash map
@@ -50,21 +52,31 @@ public class Main extends ApplicationAdapter implements GestureDetector.GestureL
 	public static GlyphLayout glyphLayout;
 
 	// Constants
+    // Map dimension
+    final float MAP_X = 100;
+    final float MAP_Y = 100;
+    final float MAP_W = 520;
+    final float MAP_H = 520;
+    // Font size
 	final int FONT_SIZE = 30;
+	// Circle properties
 	final float CIRCLE_SIZE = 22f;
-	final float CIRCLE_SIZE_ON_MAP = 8.8f;
-	final float DELAY_TO_UPDATE_PERCEPTRON = 0.5f;
+	final float CIRCLE_SIZE_ON_MAP = 6f;
+	// Interval between updates
+	final float DELAY_TO_UPDATE_PERCEPTRON = 0.038f;
 	// Theta would be threshold for the perceptron evaluation function
 	final float THETA = 0;
 	// Abstract minimum and maximum 2d plane map coordinates (-10, -9, -8, ..., 8, 9, 10)
-	final int LOWER_LIMIT = -1000;
-	final int UPPER_LIMIT = 1000;
-
-	float testX, testY, testValue;
+	final int LOWER_LIMIT = -30;
+	final int UPPER_LIMIT = 30;
+	// Learning rate for perceptron
+    final float LEARNING_RATE = 0.7f;
 
 	// create() is called before render() and it is a method used to create and instantiate objects
 	@Override
 	public void create () {
+        // Create and instantiate integer hash map
+        integerHashMap = createIntegerHashMap();
         // Create and instantiate button hash map
         buttonHashMap = createButtonHashMap();
 		// Create and instantiate color hash map
@@ -78,24 +90,19 @@ public class Main extends ApplicationAdapter implements GestureDetector.GestureL
 		// Create font
 		font = createFont("dungeonFont.ttf", FONT_SIZE);
 		// Create map
-		float initialX = 100;
-		float initialY = 100;
-		float planeWidth = 520;
-		float planeHeight = 520;
-		map = create2DPlane(initialX, initialY, planeWidth, planeHeight);
+		map = create2DPlane(MAP_X, MAP_Y, MAP_W, MAP_H);
 		// Instantiate the lists for the two circle groups
 		whiteCircleList = new ArrayList<Circle>();
 		blackCircleList = new ArrayList<Circle>();
 		// Instantiate the perceptron for the first time
-		// Default learning speed for the perceptron
-		float learningSpeed = 0.01f;
-		perceptron = new Perceptron(learningSpeed, UPPER_LIMIT);
+		// THETA represents the neuron evaluate function threshold
+		perceptron = new Perceptron(LEARNING_RATE, THETA, UPPER_LIMIT);
 		// Create and define relevant window circles
 		createRelevantWindowCircles();
 		// Instantiate GlyphLayout
         // GlyphLayout is used to calculate text placement
 		glyphLayout = new GlyphLayout();
-		// // Create and instantiate text hash map
+		// Create and instantiate text hash map
         textHashMap = createTextHashMap();
 		// Configure the window to use the gesture detector implemented on this class
 		GestureDetector gestureDetector = new GestureDetector(this);
@@ -105,16 +112,32 @@ public class Main extends ApplicationAdapter implements GestureDetector.GestureL
     // Create and return a new text hash map
     HashMap createTextHashMap() {
         HashMap<String, Text> textHashMapInstance = new HashMap<String, Text>();
+        // 2d plane origin (coordinate: 0, 0)
         textHashMapInstance.put("origin", new Text(new Point(map.getRelativeHalfWidth()-8, map.getRelativeHalfHeight()-15), "0", "LEFT"));
         // x axis limits
-        textHashMapInstance.put("negativeXAxis", new Text(new Point(map.getMapBorders().getX()-7, map.getRelativeHalfHeight()-15), ""+LOWER_LIMIT, "LEFT"));
-        textHashMapInstance.put("positiveXAxis", new Text(new Point(map.getRelativeFullWidth()+7, map.getRelativeHalfHeight()-15), ""+UPPER_LIMIT, ""));
+        textHashMapInstance.put("negativeXAxis", new Text(new Point(map.getMapBorders().getX()-7, map.getRelativeHalfHeight()-15), "-1", "LEFT"));
+        textHashMapInstance.put("positiveXAxis", new Text(new Point(map.getRelativeFullWidth()+7, map.getRelativeHalfHeight()-15), "+1", ""));
         // y axis limits
-        textHashMapInstance.put("negativeYAxis", new Text(new Point(map.getRelativeHalfWidth()-7, map.getMapBorders().getY()-15), ""+LOWER_LIMIT, "LEFT"));
-        textHashMapInstance.put("positiveYAxis", new Text(new Point(map.getRelativeHalfWidth()-7, map.getRelativeFullHeight()+15), ""+UPPER_LIMIT, "LEFT"));
-        //textHashMapInstance.put("origin", new Text(map.mapBorders.getX()-13, map.mapBorders.getY()-13, "0"));
+        textHashMapInstance.put("negativeYAxis", new Text(new Point(map.getRelativeHalfWidth()-7, map.getMapBorders().getY()-15), "-1", "LEFT"));
+        textHashMapInstance.put("positiveYAxis", new Text(new Point(map.getRelativeHalfWidth()-7, map.getRelativeFullHeight()+15), "+1", "LEFT"));
+        // Perceptron values
         textHashMapInstance.put("perceptron", new Text(new Point(map.getRelativeFullWidth(), 20), "", "LEFT"));
+        textHashMapInstance.put("perceptronLearningRate", new Text(new Point(map.getRelativeFullWidth(), 50), "", "LEFT"));
         return textHashMapInstance;
+    }
+
+    // Create and return a new integer hash map
+    HashMap createIntegerHashMap() {
+        HashMap<String, Integer> integerHashMapInstance = new HashMap<String, Integer>();
+        // Current index for white circle list
+        integerHashMapInstance.put("whiteListIndex", 0);
+        // Current index for black circle list
+        integerHashMapInstance.put("blackListIndex", 0);
+        // Current index to alternate between lists: 0 for white circle list, 1 for black circle list
+        integerHashMapInstance.put("listIndex", 0);
+        // Used to check if perceptron has finished training, as no input will get error
+        integerHashMapInstance.put("noErrorCounter", 0);
+        return integerHashMapInstance;
     }
 
 	// Create and return a new button hash map
@@ -128,6 +151,7 @@ public class Main extends ApplicationAdapter implements GestureDetector.GestureL
 	HashMap createBooleanHashMap() {
 		HashMap<String, Boolean> booleanHashMapInstance = new HashMap<String, Boolean>();
 		booleanHashMapInstance.put("isRunning", false);
+        booleanHashMapInstance.put("isFinished", false);
 		return booleanHashMapInstance;
 	}
 
@@ -137,6 +161,7 @@ public class Main extends ApplicationAdapter implements GestureDetector.GestureL
 		colorHashMapInstance.put("WHITE", new Color(1, 1, 1, 1));
 		colorHashMapInstance.put("BLACK", new Color(0, 0, 0, 1));
 		colorHashMapInstance.put("BLUE", new Color(0, 0, 1, 1));
+        colorHashMapInstance.put("GREEN", new Color(0, 1, 0, 1));
 		return colorHashMapInstance;
 	}
 
@@ -144,8 +169,8 @@ public class Main extends ApplicationAdapter implements GestureDetector.GestureL
 	void createRelevantWindowCircles() {
 		/* White and black circle generators, they are used to spawn circles when the pointer drags itself above them,
 		 and these circles can then be placed in the map */
-		whiteCircleGenerator = new Circle(new Point(50, 150), CIRCLE_SIZE, -2, colorHashMap.get("WHITE"));
-		blackCircleGenerator = new Circle(new Point(50, 250), CIRCLE_SIZE, -2, colorHashMap.get("BLACK"));
+		whiteCircleGenerator = new Circle(new Point(50, 150), CIRCLE_SIZE, -1, colorHashMap.get("WHITE"));
+		blackCircleGenerator = new Circle(new Point(50, 250), CIRCLE_SIZE, 1, colorHashMap.get("BLACK"));
 		// Circle at pointer starts as null, as there is no circle being dragged by the pointer when the application starts
 		circleAtPointer = null;
 	}
@@ -188,20 +213,75 @@ public class Main extends ApplicationAdapter implements GestureDetector.GestureL
 		// Draw all button texts
 		drawButtonsText(spriteBatch, font);
 		// Update perceptron
-		update_perceptron(map);
+		updatePerceptron(map);
 	}
 
-	void update_perceptron(Plane2D map) {
+	// Perceptron will only be updated after a certain interval defined by DELAY_TO_UPDATE_PERCEPTRON
+	void updatePerceptron(Plane2D map) {
+	    // Increment perceptron timer
 		perceptron.incrementTimeCounter(Gdx.graphics.getDeltaTime());
-		if(perceptron.getTimeCounter() >= DELAY_TO_UPDATE_PERCEPTRON) {
+		// Check if perceptron time counter exceeds the time interval needed and if it has finished the training
+		if(perceptron.getTimeCounter() >= DELAY_TO_UPDATE_PERCEPTRON && !perceptron.isFinished()) {
 			// Update perceptron and its line
-			testX = perceptron.getW1();
-			testY = perceptron.getW2();
-			testValue = perceptron.getB();
 			map.calculatePerceptronLine(perceptron, LOWER_LIMIT, UPPER_LIMIT);
+            // Adjust perceptron only by one input(circle) per interval
+            if(booleanHashMap.get("isRunning")) {
+                adjustPerceptron();
+                perceptron.updateLearningRate();
+            }
+            // Check if perceptron training/learning has finished
+            if(integerHashMap.get("noErrorCounter") >= whiteCircleList.size()+blackCircleList.size()+1 && booleanHashMap.get("isRunning")) {
+                // End training
+                perceptron.setFinished(true);
+            }
+			// Reset time to count until interval again
 			perceptron.resetTimeCounter();
 		}
 	}
+
+	// Adjust perceptron only by one input(circle) per interval
+	void adjustPerceptron() {
+        // listIndex: Current index to alternate between lists: 0 for white circle list, 1 for black circle list
+        // 0: one input(circle) from the white list
+	    if(integerHashMap.get("listIndex") == 0) {
+	        if(whiteCircleList.size() > 0) {
+                // Adjust perceptron weights based on the input(circle)
+                // Also checks if the perceptron on input got any error to verify if the training has finished, true is there is error
+                if(!perceptron.update(whiteCircleList.get(integerHashMap.get("whiteListIndex")), map)) {
+                    integerHashMap.put("noErrorCounter", integerHashMap.get("noErrorCounter")+1);
+                } else {
+                    integerHashMap.put("noErrorCounter", 0);
+                }
+                // Increment white circle list index
+                integerHashMap.put("whiteListIndex", integerHashMap.get("whiteListIndex") + 1);
+                // If post-increment white circle list index is equal or high than the list size, we reset it to 0
+                if (integerHashMap.get("whiteListIndex") >= whiteCircleList.size()) {
+                    integerHashMap.put("whiteListIndex", 0);
+                }
+            }
+            // Assures next perceptron adjustment will be made by a input from the black circle list
+            integerHashMap.put("listIndex", 1);
+            // 1: one input(circle) from the black list
+        } else if(integerHashMap.get("listIndex") == 1 && blackCircleList.size() > 0) {
+	        if(blackCircleList.size() > 0) {
+                // Adjust perceptron weights based on the input(circle)
+                // Also checks if the perceptron on input got any error to verify if the training has finished, true is there is error
+                if(!perceptron.update(blackCircleList.get(integerHashMap.get("blackListIndex")), map)) {
+                    integerHashMap.put("noErrorCounter", integerHashMap.get("noErrorCounter")+1);
+                } else {
+                    integerHashMap.put("noErrorCounter", 0);
+                }
+                // Increment black circle list index
+                integerHashMap.put("blackListIndex", integerHashMap.get("blackListIndex")+1);
+                // If post-increment black circle list index is equal or high than the list size, we reset it to 0
+                if(integerHashMap.get("blackListIndex") >= blackCircleList.size()) {
+                    integerHashMap.put("blackListIndex", 0);
+                }
+            }
+            // Assures next perceptron adjustment will be made by a input from the white circle list
+            integerHashMap.put("listIndex", 0);
+        }
+    }
 
 	void drawButtonsOutline(ShapeRenderer shapeRenderer) {
 		shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
@@ -266,6 +346,18 @@ public class Main extends ApplicationAdapter implements GestureDetector.GestureL
 		for(Circle circle: blackCircleList) {
 			circle.draw(shapeRenderer);
 		}
+        // Draw current circle being used as input in the perception training iteration
+        shapeRenderer.setColor(colorHashMap.get("GREEN"));
+        if(booleanHashMap.get("isRunning")) {
+            if(integerHashMap.get("listIndex") == 0 && whiteCircleList.size() > 0) {
+                shapeRenderer.circle(whiteCircleList.get(integerHashMap.get("whiteListIndex")).getCenter().getX(),
+                        whiteCircleList.get(integerHashMap.get("whiteListIndex")).getCenter().getY(), CIRCLE_SIZE_ON_MAP);
+            } else if(blackCircleList.size() > 0) {
+                shapeRenderer.circle(blackCircleList.get(integerHashMap.get("blackListIndex")).getCenter().getX(),
+                        blackCircleList.get(integerHashMap.get("blackListIndex")).getCenter().getY(), CIRCLE_SIZE_ON_MAP);
+            }
+        }
+        shapeRenderer.setColor(colorHashMap.get("BLACK"));
 		shapeRenderer.end();
 		shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
 		// Draw all white circles
@@ -293,13 +385,27 @@ public class Main extends ApplicationAdapter implements GestureDetector.GestureL
 
 	// Update texts on screen
 	void updateTexts() {
-	    textHashMap.get("perceptron").setText(String.format("w1: %.02f, w2: %.02f, b: %.02f", perceptron.getW1(), perceptron.getW2(), perceptron.getB()));
+	    // Update perceptron weights and bias
+	    textHashMap.get("perceptron").setText(String.format("w1: %.03f, w2: %.03f, b: %.03f", (perceptron.getW1()/UPPER_LIMIT), (perceptron.getW2()/UPPER_LIMIT), (perceptron.getB()/UPPER_LIMIT)));
+        // Update perceptron learning height
+	    textHashMap.get("perceptronLearningRate").setText(String.format("Learning rate: %.03f", perceptron.getLearningRate()));
     }
 
 	@Override
 	public boolean touchDown(float x, float y, int pointer, int button) {
 	    // The y axis is flipped in touchDown()
         y = Gdx.graphics.getHeight()-y;
+        if(buttonHashMap.get("start").isPointerInsideButton(new Point(x, y))) {
+            // Perceptron training is not running
+            if(!booleanHashMap.get("isRunning")) {
+                booleanHashMap.put("isRunning", true);
+                buttonHashMap.get("start").setText("stop");
+            // Perceptron training is running
+            } else {
+                booleanHashMap.put("isRunning", false);
+                buttonHashMap.get("start").setText("start");
+            }
+        }
 		return true;
 	}
 
@@ -324,12 +430,12 @@ public class Main extends ApplicationAdapter implements GestureDetector.GestureL
 		y = Gdx.graphics.getHeight()-y;
 		// true if pointer is dragging inside the white generator and the pointer is not already holding a circle
 		if(circleAtPointer == null && isPointerInsideCircSpawner(new Point(x, y), whiteCircleGenerator)) {
-			circleAtPointer = new Circle(new Point(x, y), CIRCLE_SIZE, -2, colorHashMap.get("WHITE"));
+			circleAtPointer = new Circle(new Point(x, y), CIRCLE_SIZE, -1, colorHashMap.get("WHITE"));
 			//whiteCircleList.add(circleAtPointer);
 		}
 		// true if pointer is dragging inside the black generator and the pointer is not already holding a circle
 		else if(circleAtPointer == null && isPointerInsideCircSpawner(new Point(x, y), blackCircleGenerator)) {
-			circleAtPointer = new Circle(new Point(x, y), CIRCLE_SIZE, -2, colorHashMap.get("BLACK"));
+			circleAtPointer = new Circle(new Point(x, y), CIRCLE_SIZE, 1, colorHashMap.get("BLACK"));
 			//blackCircleList.add(circleAtPointer);
 		}
 		updateCircleAtPointerPosition(x, y);

@@ -61,9 +61,9 @@ public class Plane2D {
         float w1 = perceptron.getW1();
         float w2 = perceptron.getW2();
         float b = perceptron.getB();
-        // Calculate map abstract unit
+        // Calculate map abstract units
         float mapUnitX = (relativeFullWidth - mapBorders.getX())/(upperLimit*2);
-        float mapUnitY = (relativeFullWidth - mapBorders.getX())/(upperLimit*2);
+        float mapUnitY = (relativeFullHeight - mapBorders.getY())/(upperLimit*2);
 
         // If y factor is lower than 1 in a equation, we multiply all other members of the equation by (1/y_factor)
         float yMultiplier = calculateYMultiplier(w2);
