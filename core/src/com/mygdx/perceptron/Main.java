@@ -5,6 +5,7 @@ import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL30;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
@@ -13,9 +14,16 @@ import com.badlogic.gdx.math.Vector2;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 public class Main extends ApplicationAdapter implements GestureDetector.GestureListener {
 
+    // Buttons hash map
+    HashMap<String, Button> buttonHashMap;
+	// Texts hash map
+	HashMap<String, Text> textHashMap;
+	// Application booleans hash map
+	HashMap<String, Boolean> booleanHashMap;
 	// Map with colors (k: Color name, v: RGBA values)
 	HashMap<String, Color> colorHashMap;
 	// Shape renderer: Used to draw rectangles, circles, lines, and so forth
@@ -32,25 +40,33 @@ public class Main extends ApplicationAdapter implements GestureDetector.GestureL
 	ArrayList<Circle> blackCircleList;
 	// Perceptron
 	Perceptron perceptron;
-	// Application booleans hash map
-	HashMap<String, Boolean> booleanHashMap;
 	// Relevant circles to be drawn in the window
 	// White and black circles generators
 	// Circle at pointer, if the pointer is dragging any
 	Circle whiteCircleGenerator, blackCircleGenerator, circleAtPointer;
 
+	// Globals
+	// GlyphLayout is used to calculate text placement
+	public static GlyphLayout glyphLayout;
+
 	// Constants
+	final int FONT_SIZE = 30;
 	final float CIRCLE_SIZE = 22f;
 	final float CIRCLE_SIZE_ON_MAP = 8.8f;
 	final float DELAY_TO_UPDATE_PERCEPTRON = 0.5f;
 	// Theta would be threshold for the perceptron evaluation function
 	final float THETA = 0;
+	// Abstract minimum and maximum 2d plane map coordinates (-10, -9, -8, ..., 8, 9, 10)
+	final int LOWER_LIMIT = -1000;
+	final int UPPER_LIMIT = 1000;
 
 	float testX, testY, testValue;
 
 	// create() is called before render() and it is a method used to create and instantiate objects
 	@Override
 	public void create () {
+        // Create and instantiate button hash map
+        buttonHashMap = createButtonHashMap();
 		// Create and instantiate color hash map
 		colorHashMap = createColorHashMap();
 		// Create and instantiate boolean hash map
@@ -60,8 +76,7 @@ public class Main extends ApplicationAdapter implements GestureDetector.GestureL
 		// Instantiate sprite batch
 		spriteBatch = new SpriteBatch();
 		// Create font
-		int fontSize = 30;
-		font = createFont("dungeonFont.ttf", fontSize);
+		font = createFont("dungeonFont.ttf", FONT_SIZE);
 		// Create map
 		float initialX = 100;
 		float initialY = 100;
@@ -72,29 +87,52 @@ public class Main extends ApplicationAdapter implements GestureDetector.GestureL
 		whiteCircleList = new ArrayList<Circle>();
 		blackCircleList = new ArrayList<Circle>();
 		// Instantiate the perceptron for the first time
-		// Weights and bias are randomized between -1 and 1
-		float w1 = (float) ((Math.random() * 2) - 1);
-		float w2 = (float) ((Math.random() * 2) - 1);
-		float b = (float) ((Math.random() * 2) - 1);
 		// Default learning speed for the perceptron
 		float learningSpeed = 0.01f;
-		perceptron = new Perceptron(w1, w2, b, learningSpeed);
+		perceptron = new Perceptron(learningSpeed, UPPER_LIMIT);
 		// Create and define relevant window circles
 		createRelevantWindowCircles();
+		// Instantiate GlyphLayout
+        // GlyphLayout is used to calculate text placement
+		glyphLayout = new GlyphLayout();
+		// // Create and instantiate text hash map
+        textHashMap = createTextHashMap();
 		// Configure the window to use the gesture detector implemented on this class
 		GestureDetector gestureDetector = new GestureDetector(this);
 		Gdx.input.setInputProcessor(gestureDetector);
 	}
 
-	// Create and return a new color map
-	public HashMap createBooleanHashMap() {
+    // Create and return a new text hash map
+    HashMap createTextHashMap() {
+        HashMap<String, Text> textHashMapInstance = new HashMap<String, Text>();
+        textHashMapInstance.put("origin", new Text(new Point(map.getRelativeHalfWidth()-8, map.getRelativeHalfHeight()-15), "0", "LEFT"));
+        // x axis limits
+        textHashMapInstance.put("negativeXAxis", new Text(new Point(map.getMapBorders().getX()-7, map.getRelativeHalfHeight()-15), ""+LOWER_LIMIT, "LEFT"));
+        textHashMapInstance.put("positiveXAxis", new Text(new Point(map.getRelativeFullWidth()+7, map.getRelativeHalfHeight()-15), ""+UPPER_LIMIT, ""));
+        // y axis limits
+        textHashMapInstance.put("negativeYAxis", new Text(new Point(map.getRelativeHalfWidth()-7, map.getMapBorders().getY()-15), ""+LOWER_LIMIT, "LEFT"));
+        textHashMapInstance.put("positiveYAxis", new Text(new Point(map.getRelativeHalfWidth()-7, map.getRelativeFullHeight()+15), ""+UPPER_LIMIT, "LEFT"));
+        //textHashMapInstance.put("origin", new Text(map.mapBorders.getX()-13, map.mapBorders.getY()-13, "0"));
+        textHashMapInstance.put("perceptron", new Text(new Point(map.getRelativeFullWidth(), 20), "", "LEFT"));
+        return textHashMapInstance;
+    }
+
+	// Create and return a new button hash map
+	HashMap createButtonHashMap() {
+		HashMap<String, Button> buttonHashMapInstance = new HashMap<String, Button>();
+		buttonHashMapInstance.put("start", new Button(new Rectangle(100, 50, 100, 45), "start"));
+		return buttonHashMapInstance;
+	}
+
+	// Create and return a new boolean hash map
+	HashMap createBooleanHashMap() {
 		HashMap<String, Boolean> booleanHashMapInstance = new HashMap<String, Boolean>();
-		booleanHashMapInstance.put("is_running", false);
+		booleanHashMapInstance.put("isRunning", false);
 		return booleanHashMapInstance;
 	}
 
-	// Create and return a new color map
-	public HashMap createColorHashMap() {
+	// Create and return a new color hash map
+	HashMap createColorHashMap() {
 		HashMap<String, Color> colorHashMapInstance = new HashMap<String, Color>();
 		colorHashMapInstance.put("WHITE", new Color(1, 1, 1, 1));
 		colorHashMapInstance.put("BLACK", new Color(0, 0, 0, 1));
@@ -141,22 +179,48 @@ public class Main extends ApplicationAdapter implements GestureDetector.GestureL
 		drawAllCirclesInTheMap(shapeRenderer);
 		// Draw circle that the pointer is dragging to the 2D Plane map
 		drawCircleAtPointer(shapeRenderer);
+		// Update texts on screen
+        updateTexts();
 		// Draw texts on screen
 		drawTexts(spriteBatch, font);
+		// Draw all button outlines
+		drawButtonsOutline(shapeRenderer);
+		// Draw all button texts
+		drawButtonsText(spriteBatch, font);
 		// Update perceptron
-		update_perceptron();
+		update_perceptron(map);
 	}
 
-	public void update_perceptron() {
+	void update_perceptron(Plane2D map) {
 		perceptron.incrementTimeCounter(Gdx.graphics.getDeltaTime());
 		if(perceptron.getTimeCounter() >= DELAY_TO_UPDATE_PERCEPTRON) {
 			// Update perceptron and its line
+			testX = perceptron.getW1();
+			testY = perceptron.getW2();
+			testValue = perceptron.getB();
+			map.calculatePerceptronLine(perceptron, LOWER_LIMIT, UPPER_LIMIT);
 			perceptron.resetTimeCounter();
 		}
 	}
 
+	void drawButtonsOutline(ShapeRenderer shapeRenderer) {
+		shapeRenderer.begin(ShapeRenderer.ShapeType.Line);
+		for(Map.Entry<String, Button> entry : buttonHashMap.entrySet()) {
+			buttonHashMap.get(entry.getKey()).draw_outline(shapeRenderer);
+		}
+		shapeRenderer.end();
+	}
+
+	void drawButtonsText(SpriteBatch spriteBatch, BitmapFont font) {
+		spriteBatch.begin();
+		for(Map.Entry<String, Button> entry : buttonHashMap.entrySet()) {
+			buttonHashMap.get(entry.getKey()).draw_text(spriteBatch, font);
+		}
+		spriteBatch.end();
+	}
+
 	// Fill background with designated color
-	public void fillBackground(Color backgroundColor) {
+	void fillBackground(Color backgroundColor) {
 		Gdx.gl.glClearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a);
 		Gdx.gl.glClear(GL30.GL_COLOR_BUFFER_BIT);
 	}
@@ -195,6 +259,7 @@ public class Main extends ApplicationAdapter implements GestureDetector.GestureL
 		}
 	}
 
+	// Draw all white and black circles in the map
 	void drawAllCirclesInTheMap(ShapeRenderer shapeRenderer) {
 		shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 		// Draw all black circles
@@ -210,6 +275,7 @@ public class Main extends ApplicationAdapter implements GestureDetector.GestureL
 		shapeRenderer.end();
 	}
 
+	// If the pointer is dragging any circle, draw circle next to the pointer
 	void updateCircleAtPointerPosition(float pointerX, float pointerY) {
 		if(circleAtPointer == null) return;
 		circleAtPointer.getCenter().setX(pointerX);
@@ -219,13 +285,22 @@ public class Main extends ApplicationAdapter implements GestureDetector.GestureL
 	// Draw texts on screen
 	void drawTexts(SpriteBatch spriteBatch, BitmapFont font) {
 		spriteBatch.begin();
-		font.draw(spriteBatch, "test: "+testX+", "+testY+" "+testValue, 100, 90);
+        for(Map.Entry<String, Text> entry : textHashMap.entrySet()) {
+            textHashMap.get(entry.getKey()).draw_text(spriteBatch, font);
+        }
 		spriteBatch.end();
 	}
 
+	// Update texts on screen
+	void updateTexts() {
+	    textHashMap.get("perceptron").setText(String.format("w1: %.02f, w2: %.02f, b: %.02f", perceptron.getW1(), perceptron.getW2(), perceptron.getB()));
+    }
+
 	@Override
 	public boolean touchDown(float x, float y, int pointer, int button) {
-		return false;
+	    // The y axis is flipped in touchDown()
+        y = Gdx.graphics.getHeight()-y;
+		return true;
 	}
 
 	@Override
@@ -245,6 +320,7 @@ public class Main extends ApplicationAdapter implements GestureDetector.GestureL
 
 	@Override
 	public boolean pan(float x, float y, float deltaX, float deltaY) {
+        // The y axis is flippen in pan()
 		y = Gdx.graphics.getHeight()-y;
 		// true if pointer is dragging inside the white generator and the pointer is not already holding a circle
 		if(circleAtPointer == null && isPointerInsideCircSpawner(new Point(x, y), whiteCircleGenerator)) {
